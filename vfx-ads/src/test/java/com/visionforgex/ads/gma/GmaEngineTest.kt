@@ -32,3 +32,61 @@ class GmaEngineTest {
         assertEquals("gma-25", GmaEngine().name)
     }
 }
+
+/** The banner size ladder: from the largest down, only on "no fill" or "invalid request". */
+class BannerSizesTest {
+    @Test fun largestFirstThenStandardThenSmall() {
+        assertEquals(listOf("L", "S", "B"), BannerSizes.tier(0, "L", "S", "B"))
+        assertEquals(listOf("S"), BannerSizes.tier(1, "L", "S", "B"))
+        assertEquals(listOf("B"), BannerSizes.tier(2, "L", "S", "B"))
+    }
+    @Test fun stepsDownOnlyWhenASmallerSizeCouldHelp() {
+        assertEquals(1, BannerSizes.next(0, 3)); assertEquals(2, BannerSizes.next(1, 3)); assertNull(BannerSizes.next(2, 3))
+        assertEquals(1, BannerSizes.next(0, 1))
+        assertNull("a network error is not about the size", BannerSizes.next(0, 2))
+    }
+}
+
+/** The real banner, with Google's view: a no-fill steps down to a smaller size before anything is reported. */
+@RunWith(RobolectricTestRunner::class)
+class BannerLadderTest {
+    private class L : com.visionforgex.ads.engine.BannerListener {
+        val failed = mutableListOf<Int>()
+        override fun onLoaded(source: String?) {}
+        override fun onFailed(code: Int, message: String) { failed += code }
+        override fun onImpression() {}
+        override fun onClicked() {}
+        override fun onPaid(valueMicros: Long, currency: String, precision: String) {}
+    }
+    private fun adView(b: Banner) = (b.view as android.view.ViewGroup).getChildAt(0) as com.google.android.gms.ads.admanager.AdManagerAdView
+    private fun noFill() = com.google.android.gms.ads.LoadAdError(3, "No fill.", "com.google.android.gms.ads", null, null)
+
+    @Test fun noFillTriesTheStandardSizeThen320x50ThenReports() {
+        val ctx = org.robolectric.RuntimeEnvironment.getApplication()
+        val l = L()
+        val b = Banner(ctx, "/21775744923/example/adaptive-banner", 360, l, GmaEngine())
+        b.load(EngineRequest(mapOf("vfx_pl" to "home")))
+        assertEquals(3, adView(b).adSizes!!.size)
+        adView(b).adListener.onAdFailedToLoad(noFill())
+        assertEquals("nothing reported yet", 0, l.failed.size)
+        assertEquals(1, adView(b).adSizes!!.size)
+        assertEquals("one view in the banner at a time", 1, (b.view as android.view.ViewGroup).childCount)
+        adView(b).adListener.onAdFailedToLoad(noFill())
+        assertEquals(com.google.android.gms.ads.AdSize.BANNER, adView(b).adSize)
+        adView(b).adListener.onAdFailedToLoad(noFill())
+        assertEquals("every size tried: the no-fill is reported, once", listOf(3), l.failed)
+        b.destroy()
+    }
+
+    @Test fun theSizeThatFilledIsKeptForTheRefresh() {
+        val ctx = org.robolectric.RuntimeEnvironment.getApplication()
+        val b = Banner(ctx, "/21775744923/example/adaptive-banner", 360, L(), GmaEngine())
+        b.load(EngineRequest(mapOf("vfx_pl" to "home")))
+        adView(b).adListener.onAdFailedToLoad(noFill())
+        adView(b).adListener.onAdLoaded()
+        val filled = adView(b)
+        b.load(EngineRequest(mapOf("vfx_pl" to "home")))
+        assertEquals("the refresh reuses the view and size that filled", filled, adView(b))
+        assertEquals(1, adView(b).adSizes!!.size)
+    }
+}

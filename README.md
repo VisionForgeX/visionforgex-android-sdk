@@ -41,7 +41,7 @@ dependencyResolutionManagement {
 
 ```kotlin
 dependencies {
-    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.0.0")
+    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.0.2")
 }
 ```
 

@@ -159,24 +159,66 @@ internal class Full(private val info: ResponseInfo?, private val doShow: (Activi
     }
 }
 
-internal class Banner(context: Context, unit: String, widthDp: Int, private val l: BannerListener, private val engine: GmaEngine) : EngineBanner {
-    private val v = AdManagerAdView(context).apply {
-        adUnitId = unit
-        // Google's large anchored adaptive banner: the biggest size that fits, and its best earner
-        setAdSizes(AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, widthDp))
-        adListener = object : AdListener() {
-            override fun onAdLoaded() = l.onLoaded(sourceOf(responseInfo))
-            override fun onAdFailedToLoad(e: LoadAdError) = l.onFailed(e.code, e.message)
-            override fun onAdImpression() = l.onImpression()
-            override fun onAdClicked() = l.onClicked()
+/**
+ * A banner, asked for in sizes from the largest down, inside one request where it can: Google's large
+ * anchored adaptive size, the standard anchored adaptive one and 320x50 together; when that finds no
+ * buyer (or the unit takes none of them), the standard adaptive size alone, then 320x50 alone. The size
+ * that filled is kept for the banner's next refreshes. Each try is a new AdManagerAdView in one
+ * container, since a view's sizes are best set once.
+ */
+internal class Banner(private val context: Context, private val unit: String, private val widthDp: Int, private val l: BannerListener, private val engine: GmaEngine) : EngineBanner {
+    private val box = android.widget.FrameLayout(context)
+    private var v: AdManagerAdView? = null
+    private var tier = 0          // where this load is in the ladder
+    private var good = -1         // the tier that filled last, for the next refreshes
+    private var request: EngineRequest? = null
+
+    internal fun sizesFor(t: Int): Array<AdSize> = BannerSizes.tier(t, AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, widthDp), AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp), AdSize.BANNER).toTypedArray()
+
+    private fun newView(t: Int): AdManagerAdView {
+        v?.destroy(); box.removeAllViews()
+        return AdManagerAdView(context).apply {
+            adUnitId = unit
+            setAdSizes(*sizesFor(t))
+            adListener = object : AdListener() {
+                override fun onAdLoaded() { good = tier; l.onLoaded(sourceOf(responseInfo)) }
+                override fun onAdFailedToLoad(e: LoadAdError) {
+                    val next = BannerSizes.next(tier, e.code)
+                    if (next != null) { tier = next; v = newView(tier); request?.let { v!!.loadAd(engine.request(it)) }; return }   // a smaller size, at once, in the same load
+                    good = -1
+                    l.onFailed(e.code, e.message)
+                }
+                override fun onAdImpression() = l.onImpression()
+                override fun onAdClicked() = l.onClicked()
+            }
+            onPaidEventListener = com.google.android.gms.ads.OnPaidEventListener { val x = it; l.onPaid(x.valueMicros, x.currencyCode, precisionOf(x)) }
+            box.addView(this, android.widget.FrameLayout.LayoutParams(android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.widget.FrameLayout.LayoutParams.WRAP_CONTENT, android.view.Gravity.CENTER))
         }
-        onPaidEventListener = com.google.android.gms.ads.OnPaidEventListener { val x = it; l.onPaid(x.valueMicros, x.currencyCode, precisionOf(x)) }
     }
-    override val view: View get() = v
-    override fun load(request: EngineRequest) { v.loadAd(engine.request(request)) }
-    override fun pause() = v.pause()
-    override fun resume() = v.resume()
-    override fun destroy() = v.destroy()
+
+    override val view: View get() = box
+    override fun load(request: EngineRequest) {
+        this.request = request
+        val start = if (good >= 0) good else 0
+        if (v == null || tier != start) { tier = start; v = newView(tier) }
+        v!!.loadAd(engine.request(request))
+    }
+    override fun pause() { v?.pause() }
+    override fun resume() { v?.resume() }
+    override fun destroy() { v?.destroy(); v = null; box.removeAllViews() }
+}
+
+/** The banner size ladder, apart so it can be tested without Google. */
+internal object BannerSizes {
+    const val LAST = 2
+    /** 0: large, standard and 320x50 together; 1: standard alone; 2: 320x50 alone. */
+    fun <T> tier(t: Int, large: T, standard: T, small: T): List<T> = when (t) {
+        0 -> listOf(large, standard, small)
+        1 -> listOf(standard)
+        else -> listOf(small)
+    }
+    /** The next tier to try after a failure, or null to report it: only "no fill" (3) and "invalid request" (1) step down. */
+    fun next(t: Int, code: Int): Int? = if ((code == 3 || code == 1) && t < LAST) t + 1 else null
 }
 
 internal class Native(private val ad: NativeAd) : EngineNativeAd {
