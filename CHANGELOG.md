@@ -1,0 +1,14 @@
+# Changelog
+
+## 1.0.0 (30 Oct 2026)
+
+The first release, on Google Mobile Ads 25.5 and Google's User Messaging Platform 4.0.
+
+- Settings from the platform (cached, refreshed with ETag), every decision there.
+- Banner (large anchored adaptive, collapsible, refresh only while seen), interstitial, rewarded,
+  rewarded interstitial, app open (on return and at a cold start), native (small and medium layouts).
+- Preloading with expiry, retries with backoff, floor tiers with timeouts, pacing and caps, a gap
+  between full-screen ads, never two at once.
+- Consent through Google's UMP; child-directed and under-age settings (Google's age-restricted treatment).
+- Events: sessions, requests, fills, shows, clicks, paid (per-impression revenue), kept on disk until sent.
+- Experiments reported by variant; a debug panel; Google's ad inspector.

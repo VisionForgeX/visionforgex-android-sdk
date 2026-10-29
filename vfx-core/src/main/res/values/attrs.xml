@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="VfxBannerView">
+        <attr name="vfxPlacement" format="string" />
+    </declare-styleable>
+    <declare-styleable name="VfxNativeView">
+        <attr name="vfxPlacement" />
+    </declare-styleable>
+</resources>

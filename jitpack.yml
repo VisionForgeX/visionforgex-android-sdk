@@ -1,0 +1,5 @@
+# JitPack builds the libraries from a tag: com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:<tag>
+jdk:
+  - openjdk17
+install:
+  - ./gradlew :vfx-core:publishToMavenLocal :vfx-ads:publishToMavenLocal -x test

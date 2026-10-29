@@ -1,0 +1,20 @@
+name: Build and test
+on:
+  push:
+  pull_request:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Tests
+        run: ./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest
+      - name: Lint
+        run: ./gradlew :vfx-core:lintRelease :vfx-ads:lintRelease
+      - name: The sample app
+        run: ./gradlew :sample:assembleDebug :sample:assembleRelease

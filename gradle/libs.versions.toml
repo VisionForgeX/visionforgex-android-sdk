@@ -1,0 +1,20 @@
+[versions]
+agp = "8.13.2"
+kotlin = "2.2.21"
+gma = "25.5.0"
+ump = "4.0.0"
+junit = "4.13.2"
+robolectric = "4.17"
+androidx-test = "1.7.0"
+
+[libraries]
+gma = { module = "com.google.android.gms:play-services-ads", version.ref = "gma" }
+ump = { module = "com.google.android.ump:user-messaging-platform", version.ref = "ump" }
+junit = { module = "junit:junit", version.ref = "junit" }
+robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
+androidx-test-core = { module = "androidx.test:core", version.ref = "androidx-test" }
+
+[plugins]
+android-library = { id = "com.android.library", version.ref = "agp" }
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

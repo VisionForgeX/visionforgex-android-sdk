@@ -1,0 +1,1 @@
+-keep class com.visionforgex.ads.gma.GmaEngine { <init>(); }
