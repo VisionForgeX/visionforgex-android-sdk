@@ -96,13 +96,13 @@ public class VfxBannerView @JvmOverloads constructor(context: Context, attrs: At
         override fun onLoaded(source: String?) {
             post {
                 loadedOnce = true; attempt = 0
-                s.event("fill", p, mapOf("tier" to 0, "ms" to s.now() - started0, "src" to source))
+                s.event("fill", p, mapOf("tier" to 0, "ms" to s.now() - started0, "src" to source) + detail())
                 schedule(p)
             }
         }
         override fun onFailed(code: Int, message: String) {
             post {
-                s.event("nofill", p, mapOf("tier" to 0, "ms" to s.now() - started0, "err" to code.toString()))
+                s.event("nofill", p, mapOf("tier" to 0, "ms" to s.now() - started0, "err" to code.toString(), "msg" to message.take(100)) + detail())
                 attempt++
                 if (attempt <= p.retry.maxAttempts) postDelayed(retry, backoffMs(attempt, p.retry)) else if (loadedOnce) schedule(p)
             }
@@ -111,6 +111,9 @@ public class VfxBannerView @JvmOverloads constructor(context: Context, attrs: At
         override fun onClicked() { post { s.event("click", p) } }
         override fun onPaid(valueMicros: Long, currency: String, precision: String) { post { s.event("paid", p, mapOf("v" to valueMicros, "cur" to currency, "prec" to precision)) } }
     }
+
+    /** The sizes asked for and their answers, when the engine says (informational; the platform ignores it). */
+    private fun detail(): Map<String, Any?> = banner?.detail?.takeIf { it.isNotEmpty() }?.let { mapOf("sizes" to it.take(200)) } ?: emptyMap()
 
     private fun schedule(p: Placement) {
         removeCallbacks(refresh)

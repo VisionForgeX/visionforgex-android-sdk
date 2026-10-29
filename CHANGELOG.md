@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.3 (not released yet)
+
+- A banner's `fill` and `nofill` events say which sizes it asked for and how each answered (`sizes`), and a
+  `nofill` carries Google's own message (`msg`), so a banner that never fills says why in the app's logs.
+
 ## 1.0.2 (30 Oct 2026)
 
 - Banners now ask for sizes from the largest down: Google's large anchored adaptive banner, the standard

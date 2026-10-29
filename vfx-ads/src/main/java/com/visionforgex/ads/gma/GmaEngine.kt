@@ -172,6 +172,9 @@ internal class Banner(private val context: Context, private val unit: String, pr
     private var tier = 0          // where this load is in the ladder
     private var good = -1         // the tier that filled last, for the next refreshes
     private var request: EngineRequest? = null
+    private val tried = StringBuilder()
+    override val detail: String get() = tried.toString()
+    private fun note(result: String) { if (tried.isNotEmpty()) tried.append(" → "); tried.append(sizesFor(tier).joinToString("+") { "${it.width}x${it.height}" }).append('=').append(result) }
 
     internal fun sizesFor(t: Int): Array<AdSize> = BannerSizes.tier(t, AdSize.getLargeAnchoredAdaptiveBannerAdSize(context, widthDp), AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(context, widthDp), AdSize.BANNER).toTypedArray()
 
@@ -181,8 +184,9 @@ internal class Banner(private val context: Context, private val unit: String, pr
             adUnitId = unit
             setAdSizes(*sizesFor(t))
             adListener = object : AdListener() {
-                override fun onAdLoaded() { good = tier; l.onLoaded(sourceOf(responseInfo)) }
+                override fun onAdLoaded() { good = tier; note("filled " + (adSize?.let { "${it.width}x${it.height}" } ?: "")); l.onLoaded(sourceOf(responseInfo)) }
                 override fun onAdFailedToLoad(e: LoadAdError) {
+                    note(e.code.toString())
                     val next = BannerSizes.next(tier, e.code)
                     if (next != null) { tier = next; v = newView(tier); request?.let { v!!.loadAd(engine.request(it)) }; return }   // a smaller size, at once, in the same load
                     good = -1
@@ -199,6 +203,7 @@ internal class Banner(private val context: Context, private val unit: String, pr
     override val view: View get() = box
     override fun load(request: EngineRequest) {
         this.request = request
+        tried.setLength(0)
         val start = if (good >= 0) good else 0
         if (v == null || tier != start) { tier = start; v = newView(tier) }
         v!!.loadAd(engine.request(request))

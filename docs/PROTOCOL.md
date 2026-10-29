@@ -106,7 +106,7 @@ Body (may be sent with `Content-Encoding: gzip`), at most 512 KB, at most 500 ev
 |---|---|
 | `ses` | A session starts. `n`: the session's number on this install; `first`: the first ever. |
 | `req` | An ad request (one per floor tier). |
-| `fill` / `nofill` | Its answer; `ms` the time it took; `err` Google's error code on `nofill`. |
+| `fill` / `nofill` | Its answer; `ms` the time it took; `err` Google's error code on `nofill`, `msg` Google's message (up to 100 characters); for banners `sizes`, the sizes asked for and how each answered (`411x64+411x60+320x50=3 → 320x50=filled 320x50`). `msg` and `sizes` are for the app's own logs: the platform ignores them. |
 | `show` / `click` / `close` | The ad was shown, clicked, closed. |
 | `fail` | A loaded ad could not be shown (`err`). |
 | `reward` | Rewarded formats: the user earned the reward. |

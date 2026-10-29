@@ -75,6 +75,8 @@ public interface FullScreenListener {
 
 public interface EngineBanner {
     public val view: View
+    /** For the logs: the sizes the last load asked for and how each answered, e.g. "411x64+411x60+320x50=3 → 320x50=filled". */
+    public val detail: String get() = ""
     public fun load(request: EngineRequest)
     public fun pause()
     public fun resume()

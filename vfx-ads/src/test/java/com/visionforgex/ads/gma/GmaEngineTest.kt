@@ -4,6 +4,7 @@ import com.google.ads.mediation.admob.AdMobAdapter
 import com.visionforgex.ads.engine.EngineRequest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -75,6 +76,8 @@ class BannerLadderTest {
         assertEquals(com.google.android.gms.ads.AdSize.BANNER, adView(b).adSize)
         adView(b).adListener.onAdFailedToLoad(noFill())
         assertEquals("every size tried: the no-fill is reported, once", listOf(3), l.failed)
+        assertEquals("the log says every size asked for and its answer", 3, b.detail.split(" → ").size)
+        assertTrue(b.detail, Regex("""^\d+x\d+\+\d+x\d+\+320x50=3 → \d+x\d+=3 → 320x50=3$""").matches(b.detail))
         b.destroy()
     }
 
@@ -85,6 +88,7 @@ class BannerLadderTest {
         adView(b).adListener.onAdFailedToLoad(noFill())
         adView(b).adListener.onAdLoaded()
         val filled = adView(b)
+        assertTrue(b.detail, b.detail.endsWith("=filled " + "${adView(b).adSize!!.width}x${adView(b).adSize!!.height}") && b.detail.contains("=3 → "))
         b.load(EngineRequest(mapOf("vfx_pl" to "home")))
         assertEquals("the refresh reuses the view and size that filled", filled, adView(b))
         assertEquals(1, adView(b).adSizes!!.size)

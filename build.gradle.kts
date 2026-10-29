@@ -11,5 +11,5 @@ plugins {
 // The version comes from the tag JitPack builds (VERSION), else the one below.
 allprojects {
     group = "com.github.VisionForgeX.visionforgex-android-sdk"
-    version = System.getenv("VERSION")?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: "1.0.2"
+    version = System.getenv("VERSION")?.removePrefix("v")?.takeIf { it.isNotBlank() } ?: "1.0.3"
 }
