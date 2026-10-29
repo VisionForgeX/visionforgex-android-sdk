@@ -4,6 +4,9 @@
 
 - A banner's `fill` and `nofill` events say which sizes it asked for and how each answered (`sizes`), and a
   `nofill` carries Google's own message (`msg`), so a banner that never fills says why in the app's logs.
+- The demo app has a banner lab: the same banner asked for eight ways straight through Google's SDK
+  (Google's own sample, each size, the fixed-size unit, with VisionForgeX's key-value or request agent, all
+  three sizes together, AdMob's test banner), each with its answer, to find what a banner needs to fill.
 
 ## 1.0.2 (30 Oct 2026)
 

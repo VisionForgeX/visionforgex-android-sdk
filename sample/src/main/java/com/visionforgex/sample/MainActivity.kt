@@ -49,6 +49,7 @@ class MainActivity : Activity() {
     private var earned = 0L
     private lateinit var earnedView: TextView
     private val time = SimpleDateFormat("HH:mm:ss", Locale.US)
+    private var lab: BannerLab? = null
 
     private fun dp(v: Int) = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, v.toFloat(), resources.displayMetrics).toInt()
     private fun round(color: Int, radius: Int = 14, stroke: Int? = null) = GradientDrawable().apply { setColor(color); cornerRadius = dp(radius).toFloat(); stroke?.let { setStroke(dp(1), it) } }
@@ -85,6 +86,11 @@ class MainActivity : Activity() {
         status = text("Starting…", 13.5f, Color.WHITE).apply { setPadding(0, dp(10), 0, 0) }
         head.addView(status)
         gap(head)
+
+        // the banner lab: the same banner asked for several ways, to see what Google fills
+        val lab = BannerLab(this) { line, good -> log.addView(text("${time.format(Date())}  $line", 11.5f, if (good) green else amber).apply { typeface = Typeface.MONOSPACE; setPadding(0, dp(2), 0, dp(2)) }, 0) }
+        this.lab = lab
+        gap(lab.card(card("Banner lab"), { t, size, color -> text(t, size, color) }, ::dp, muted, green, amber) { go -> button("Ask Google again") { go() }.also { main.postDelayed({ go() }, 3000) } })
 
         // full-screen formats
         val fs = card("Full-screen ads")
@@ -143,6 +149,7 @@ class MainActivity : Activity() {
         tools.addView(toolRow)
         gap(tools)
         gap(modeCard())
+
         gap(text("Collapsible banner (opens large once, then collapses):", 12.5f, muted))
         gap(FrameLayout(this).apply { background = round(Color.WHITE, 12, line); addView(VfxBannerView(this@MainActivity, "collapsible_banner")) })
 
@@ -154,6 +161,10 @@ class MainActivity : Activity() {
         setContentView(page)
         tick()
     }
+
+    override fun onPause() { lab?.pause(); super.onPause() }
+    override fun onResume() { super.onResume(); lab?.resume() }
+    override fun onDestroy() { lab?.destroy(); super.onDestroy() }
 
     /** Every second: the SDK's state and each placement's. */
     private fun tick() {
