@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.0.1 (30 Oct 2026)
+
+- `VfxOptions.Builder().googleDemoAds()`: every format on Google's own demo ad units, which always fill
+  with test ads, so an app (or the demo app) can be seen working with no account; nothing is sent.
+  `settingsForTesting(json)` for tests with settings of your own. Neither is for a release build.
+- `VisionForgeX.setRevenueListener { … }`: each impression's value (Google's paid event) for the app's own
+  analytics; `setEventListener { … }`: every ad event; `settingsSource()`.
+- The sample app is now the VisionForgeX demo: every format with its state, both native layouts, a
+  collapsible banner, a live event log, and the choice between Google's demo ads and an app key.
+
 ## 1.0.0 (30 Oct 2026)
 
 The first release, on Google Mobile Ads 25.5 and Google's User Messaging Platform 4.0.

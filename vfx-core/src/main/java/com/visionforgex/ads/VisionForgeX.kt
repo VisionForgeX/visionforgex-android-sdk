@@ -106,6 +106,17 @@ public object VisionForgeX {
     /** Google's ad inspector, for checking a live build. */
     @JvmStatic public fun openAdInspector(context: Context) { sdk?.engine?.openInspector(context) }
 
+    /** Every ad event as it happens (null stops it). Called on the main thread. */
+    @JvmStatic public fun setEventListener(listener: VfxEventListener?) { eventListener = listener }
+    @Volatile internal var eventListener: VfxEventListener? = null
+    @Volatile internal var revenueListener: VfxRevenueListener? = null
+
+    /** What each impression earned, for the app's own analytics (null stops it). Called on the main thread. */
+    @JvmStatic public fun setRevenueListener(listener: VfxRevenueListener?) { revenueListener = listener }
+
+    /** Where the settings came from: "platform", "cache", "testing", or "none". */
+    @JvmStatic public fun settingsSource(): String = sdk?.configFrom ?: "none"
+
     /** Sends the events waiting now (they are sent by themselves too). */
     @JvmStatic public fun flush() { sdk?.flushNow() }
 

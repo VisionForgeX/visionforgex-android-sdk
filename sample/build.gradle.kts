@@ -30,10 +30,19 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { t -> System.getenv("VFX_MAVEN_MIRROR")?.let { t.systemProperty("robolectric.dependency.repo.url", it) }; System.getenv("VFX_SHOTS")?.let { t.systemProperty("vfx.shots", it) } }
+        }
+    }
 }
 
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 dependencies {
     implementation(project(":vfx-ads"))
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }

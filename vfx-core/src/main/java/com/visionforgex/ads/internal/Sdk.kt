@@ -75,7 +75,7 @@ internal class Sdk(
         installId = store.getString(INSTALL) ?: UUID.randomUUID().toString().also { store.putString(INSTALL, it) }
         events = EventLog(File(app.noBackupFilesDir, "visionforgex"), clock, { r -> io.execute(r) })
         events.inSample = true
-        store.getString(CONFIG)?.let { ConfigParser.parse(it) }?.let { config = it; configFrom = "cache"; configAt = store.getLong(CONFIG_AT, 0) }
+        if (options.settingsForTesting == null) store.getString(CONFIG)?.let { ConfigParser.parse(it) }?.let { config = it; configFrom = "cache"; configAt = store.getLong(CONFIG_AT, 0) }
         config?.let(::applyLog)
         app.registerActivityLifecycleCallbacks(Tracker())
     }
@@ -89,7 +89,7 @@ internal class Sdk(
 
     private var fetching = false
     fun fetchConfig(reason: String) {
-        if (fetching) return
+        if (fetching || options.settingsForTesting != null) return
         fetching = true
         val av = try { app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
         val url = options.baseUrl + "/sdk/v1/config.php?k=" + enc(key) + "&i=" + enc(installId) + "&sv=" + enc(BuildConfig.VFX_VERSION) + "&p=android&b=" + enc(app.packageName) + "&av=" + enc(av)
@@ -231,6 +231,10 @@ internal class Sdk(
         return m
     }
     override fun event(type: String, p: Placement, fields: Map<String, Any?>) {
+        try {
+            com.visionforgex.ads.VisionForgeX.eventListener?.onEvent(com.visionforgex.ads.VfxEvent(type, p.name, p.format, fields, clock()))
+            if (type == "paid") com.visionforgex.ads.VisionForgeX.revenueListener?.onRevenue(p.name, p.format, (fields["v"] as? Number)?.toLong() ?: 0L, fields["cur"] as? String ?: "", fields["prec"] as? String ?: "", fields["src"] as? String)
+        } catch (t: Throwable) { VLog.e("The app's event listener failed", t) }   // the app's own code never stops ours
         val c = config ?: return
         if (!c.eventsOn) return
         events.add(type, mapOf("pl" to p.name, "f" to p.format.wire) + fields)
@@ -270,7 +274,7 @@ internal class Sdk(
         val timeout = (config?.sessionTimeoutSec ?: 1800) * 1000L
         if (sessionId.isEmpty() || (backgroundAt > 0 && now - backgroundAt > timeout)) startSession()
         val c = config
-        if (c == null || now - configAt > c.ttlSec * 1000L) fetchConfig("foreground")
+        if (options.settingsForTesting == null && (c == null || now - configAt > c.ttlSec * 1000L)) fetchConfig("foreground")
         // after a while away, give up on giving up: load again
         slots.values.forEach { it.load(fresh = it.state == "gave up") }
         if (backgroundAt > 0) maybeAppOpen(cold = false)
@@ -339,6 +343,16 @@ internal class Sdk(
             started = 1
             resumed = WeakReference(current)
             onForeground()
+        }
+        val testing = options.settingsForTesting
+        if (testing != null) {   // a demo or a test: these settings, nothing fetched, nothing kept
+            val c = ConfigParser.parse(testing)
+            if (c == null) { VLog.e("settingsForTesting: not settings this SDK understands."); announce(); return }
+            VLog.w("Using settings given by the app (testing only), not the platform's.")
+            configAt = clock()
+            setConfig(c, "testing")
+            proceed()
+            return
         }
         if (config != null) proceed()
         if (configFrom != "platform") fetchConfig("start")
