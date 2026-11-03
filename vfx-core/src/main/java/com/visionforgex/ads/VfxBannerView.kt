@@ -68,7 +68,7 @@ public class VfxBannerView @JvmOverloads constructor(context: Context, attrs: At
         removeCallbacks(refresh); removeCallbacks(retry)
         banner?.destroy(); banner = null
         removeAllViews()
-        started = false; loadedOnce = false; attempt = 0
+        started = false; loadedOnce = false; attempt = 0; seq++
     }
 
     /** Loads (or reloads) now. Usually not needed: it loads by itself. */
@@ -86,10 +86,18 @@ public class VfxBannerView @JvmOverloads constructor(context: Context, attrs: At
             addView(banner!!.view, LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER))
         }
         val kv = s.keyValues(p)
-        started0 = s.now()
-        s.event("req", p, mapOf("tier" to 0))
-        banner!!.load(EngineRequest(kv, if (!loadedOnce) p.collapsible else ""))
+        val mine = ++seq
+        val go = { bid: Map<String, String> ->
+            val b = banner
+            if (mine == seq && b != null) {   // a newer load, or stop(), in between: this answer is dropped
+                started0 = s.now()
+                s.event("req", p, mapOf("tier" to 0))
+                b.load(EngineRequest(kv + bid, if (!loadedOnce) p.collapsible else ""))
+            }
+        }
+        if (p.prebidImp.isEmpty()) go(emptyMap()) else s.prebid(p) { bid -> post { go(bid) } }
     }
+    private var seq = 0
     private var started0 = 0L
 
     private fun listener(p: Placement, s: Sdk) = object : BannerListener {

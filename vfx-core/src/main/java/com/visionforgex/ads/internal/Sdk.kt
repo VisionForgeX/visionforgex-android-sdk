@@ -230,6 +230,31 @@ internal class Sdk(
         config?.ab?.takeIf { it.isNotEmpty() }?.let { m["vfx_ab"] = it.replace(':', '_') }
         return m
     }
+    private val prebidRunner by lazy {
+        PrebidRunner(post = { d, r -> post(d, r) }, cancel = { cancel(it) }, now = { clock() }, io = { r -> io.execute(r) },
+            send = { url, body, tmo -> Http.postJsonFast(url, body, tmo) }, device = ::prebidDevice, signals = ::prebidSignals,
+            appVersion = { try { app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "" } catch (e: Exception) { "" } },
+            sdkVersion = BuildConfig.VFX_VERSION, event = { p, r, why ->
+                event("pb", p, mapOf("r" to r.result, "ms" to r.ms) + (if (r.result == "bid") mapOf("v" to r.valueMicros) else emptyMap()) + (if (why.isNotEmpty()) mapOf("why" to why) else emptyMap()))
+            })
+    }
+    override fun prebid(placement: Placement, done: (Map<String, String>) -> Unit) {
+        val c = config
+        if (c == null) done(emptyMap()) else prebidRunner.run(c, placement, done)
+    }
+    private fun prebidDevice(): Prebid.Device {
+        val m = app.resources.displayMetrics
+        return Prebid.Device("android", Build.VERSION.RELEASE ?: "", Build.MANUFACTURER ?: "", Build.MODEL ?: "", app.resources.configuration.smallestScreenWidthDp >= 600,
+            Locale.getDefault().language, m.widthPixels, m.heightPixels, m.density.toDouble(), System.getProperty("http.agent") ?: "")
+    }
+    /** What Google's consent form (or any IAB-compliant one) left in the app's preferences. */
+    private fun prebidSignals(): Prebid.Signals {
+        val all = try { app.getSharedPreferences(app.packageName + "_preferences", Context.MODE_PRIVATE).all } catch (e: Exception) { emptyMap<String, Any?>() }
+        fun str(k: String) = (all[k] as? String) ?: ""
+        val gdpr = (all["IABTCF_gdprApplies"] as? Number)?.toInt() ?: (all["IABTCF_gdprApplies"] as? String)?.toIntOrNull()
+        return Prebid.Signals(gdpr?.let { it == 1 }, str("IABTCF_TCString"), str("IABUSPrivacy_String"), str("IABGPP_HDR_GppString"), str("IABGPP_GppSID"))
+    }
+
     override fun event(type: String, p: Placement, fields: Map<String, Any?>) {
         try {
             com.visionforgex.ads.VisionForgeX.eventListener?.onEvent(com.visionforgex.ads.VfxEvent(type, p.name, p.format, fields, clock()))

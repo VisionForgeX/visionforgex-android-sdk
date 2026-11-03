@@ -54,6 +54,15 @@ Headers: `If-None-Match` with the last `ETag`. Answer `304` when nothing changed
 - `consent.ump`: ask Google's User Messaging Platform for consent where the law needs it, before any
   ad request. `child` / `underAge`: Google's child-directed and under-age-of-consent tags. `rating`:
   the highest ad content rating (`G`, `PG`, `T`, `MA`, or empty for none).
+- `prebid` (optional, absent unless the platform has Prebid on for this app): `{ "url": "<Prebid Server auction address>",
+  "request": "<stored request id>", "timeoutMs": 800, "breaker": { "failures": 3, "pauseSec": 600 } }`. A placement
+  of format `banner` or `interstitial` may carry `"prebid": { "imp": "<stored imp id>" }`. Where both are present the
+  SDK, before each ad request, POSTs a small OpenRTB request (the stored ids, plus what the device says about itself and
+  the IAB consent strings it finds in the app's preferences; never an advertising ID or a location) to `url`, waits at
+  most `timeoutMs` (clamped 100–3000), and adds the winning bid's `ext.prebid.targeting` keys (`hb_*` only) to the Google
+  request's key-values on every floor tier. No bid, an error or a timeout: Google alone, as without the block.
+  The SDK sends no request when GDPR applies and there is no consent string, and after `failures` errors or timeouts
+  in a row it stops asking for `pauseSec`. Never present for child-directed or under-age apps or in test mode.
 - `events`: where to send events (section 2). `sample` (0–1) applies to every event but `ses` and
   `paid`, which are always sent (users and revenue are never estimated). The install is in or out of
   the sample once per install (FNV-1a of the install ID), not per event; the platform scales the
@@ -111,6 +120,7 @@ Body (may be sent with `Content-Encoding: gzip`), at most 512 KB, at most 500 ev
 | `fail` | A loaded ad could not be shown (`err`). |
 | `reward` | Rewarded formats: the user earned the reward. |
 | `paid` | Google's paid event: what this one impression earned (`v` micros, `cur`, `prec`). |
+| `pb` | A Prebid auction ran (or was skipped): `r` = `bid`, `nobid`, `timeout`, `error` or `skip`; `ms` the time it took; `v` the best bid in micros (on `bid`); `why` on `skip` (`consent`, `breaker`). |
 | `capped` | `show()` was called but pacing said no (`why`: interval, session, hour, day, grace, nth, gap). |
 
 `c` is the country of the device's locale (the platform uses the request's own country when its CDN

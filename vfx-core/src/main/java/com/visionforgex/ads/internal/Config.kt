@@ -32,7 +32,12 @@ internal data class Placement(
     val collapsible: String,
     val template: String,
     val autoShow: Boolean,
+    /** The stored imp to ask a Prebid Server for bids with before Google is asked; empty: not bid for (PROTOCOL.md, "prebid"). */
+    val prebidImp: String = "",
 )
+
+/** Where and how to ask for bids (PROTOCOL.md, "prebid"); absent unless the platform turned it on for this app. */
+internal data class PrebidSettings(val url: String, val request: String, val timeoutMs: Long, val breakerFailures: Int, val breakerPauseSec: Int)
 
 /** The settings from the platform (PROTOCOL.md section 1), checked and kept within safe bounds. */
 internal data class Config(
@@ -55,6 +60,7 @@ internal data class Config(
     val kv: Map<String, String>,
     val ab: String,
     val placements: Map<String, Placement>,
+    val prebid: PrebidSettings? = null,
 )
 
 internal object ConfigParser {
@@ -100,7 +106,19 @@ internal object ConfigParser {
             kv = kv,
             ab = o.optString("ab").let { if (Regex("^e\\d{1,4}:[ab]$").matches(it)) it else "" },
             placements = pls,
+            prebid = prebid(o.optJSONObject("prebid")),
         )
+    }
+
+    private val STORED_ID = Regex("^[A-Za-z0-9_.-]{1,80}$")
+    /** The Prebid block, or null when it is absent or not usable (no address, no stored request): then nothing is bid for. */
+    private fun prebid(b: JSONObject?): PrebidSettings? {
+        b ?: return null
+        val url = b.optString("url")
+        val request = b.optString("request")
+        if (!(url.startsWith("https://") || url.startsWith("http://")) || !STORED_ID.matches(request)) return null
+        val br = b.optJSONObject("breaker") ?: JSONObject()
+        return PrebidSettings(url, request, b.optLong("timeoutMs", 800).coerceIn(100, 3000), br.optInt("failures", 3).coerceIn(1, 20), br.optInt("pauseSec", 600).coerceIn(30, 3600))
     }
 
     private fun placement(name: String, f: VfxFormat, p: JSONObject): Placement {
@@ -130,6 +148,7 @@ internal object ConfigParser {
             collapsible = p.optString("collapsible").let { if (it == "top" || it == "bottom") it else "" },
             template = p.optString("template").let { if (it == "small") "small" else "medium" },
             autoShow = f == VfxFormat.APP_OPEN && p.optBoolean("autoShow", false),
+            prebidImp = if (f == VfxFormat.BANNER || f == VfxFormat.INTERSTITIAL) p.optJSONObject("prebid")?.optString("imp")?.takeIf { STORED_ID.matches(it) } ?: "" else "",
         )
     }
 }

@@ -30,13 +30,17 @@ internal object Http {
         return request(url, "POST", raw, null)
     }
 
-    private fun request(url: String, method: String, body: ByteArray?, etag: String?): HttpResult {
+    /** A JSON body as it is (a Prebid Server is not told to expect gzip) with short timeouts: the caller waits only so long for bids. */
+    fun postJsonFast(url: String, json: String, timeoutMs: Int): HttpResult =
+        request(url, "POST", json.toByteArray(Charsets.UTF_8), null, gzipOk = false, connectMs = timeoutMs, readMs = timeoutMs)
+
+    private fun request(url: String, method: String, body: ByteArray?, etag: String?, gzipOk: Boolean = true, connectMs: Int = 8000, readMs: Int = 10000): HttpResult {
         var c: HttpURLConnection? = null
         return try {
             c = (URL(url).openConnection() as HttpURLConnection).apply {
                 requestMethod = method
-                connectTimeout = 8000
-                readTimeout = 10000
+                connectTimeout = connectMs
+                readTimeout = readMs
                 useCaches = false
                 instanceFollowRedirects = true
                 setRequestProperty("User-Agent", userAgent)
@@ -44,7 +48,7 @@ internal object Http {
                 if (etag != null) setRequestProperty("If-None-Match", etag)
             }
             if (body != null) {
-                val gz = body.size > 1024
+                val gz = gzipOk && body.size > 1024
                 val out = if (gz) gzip(body) else body
                 c.doOutput = true
                 c.setRequestProperty("Content-Type", "application/json; charset=utf-8")

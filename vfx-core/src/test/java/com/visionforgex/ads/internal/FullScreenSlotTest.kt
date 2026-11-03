@@ -61,6 +61,9 @@ internal class FakeEnv(override val engine: FakeEngine, var cfg: Config?) : Slot
     override fun keyValues(placement: Placement) = mapOf("vfx_pl" to placement.name)
     override fun event(type: String, p: Placement, fields: Map<String, Any?>) { events.add(type to fields) }
     override fun onFullScreenClosed() {}
+    /** Prebid: the test answers when it likes (null: not bid for). */
+    var prebidAsk: ((Placement, (Map<String, String>) -> Unit) -> Unit)? = null
+    override fun prebid(placement: Placement, done: (Map<String, String>) -> Unit) { prebidAsk?.invoke(placement, done) ?: done(emptyMap()) }
     fun advance(ms: Long) { t += ms; runDue() }
     private var running = false
     private fun runDue() { if (running) return; running = true; while (true) { val due = queue.filter { it.first <= t }.minByOrNull { it.first } ?: break; queue.remove(due); due.second.run() }; running = false }
@@ -169,6 +172,55 @@ class FullScreenSlotTest {
         env.cfg = env.cfg!!.copy(enabled = false)
         s.show(activity, object : VfxShowListener { override fun onNotShown(reason: String) { why = reason } })
         assertEquals("paused", why)
+    }
+
+    private fun plBid(floors: List<String> = emptyList()) = Placement("lv", VfxFormat.INTERSTITIAL, true, "/1/int", true, 55, 0, Cap(), Retry(3, 2, 64), Floors("vfx_fl", floors, 2500), "", "", false, "imp-lv")
+
+    @Test fun bidsAreAskedForFirstAndTheWinnerGoesToGoogleOnEveryTier() {
+        env.cfg = config(plBid(listOf("300", "150")))
+        var answer: ((Map<String, String>) -> Unit)? = null
+        env.prebidAsk = { _, done -> answer = done }
+        val s = FullScreenSlot("lv", env)
+        s.load()
+        assertEquals("Google is not asked while the bids are awaited", 0, engine.requests.size)
+        assertEquals("bidding", s.state)
+        s.load()   // a second load() meanwhile asks for nothing more
+        answer!!.invoke(mapOf("hb_pb" to "1.20", "hb_bidder" to "appnexus"))
+        assertEquals(mapOf("vfx_pl" to "lv", "vfx_fl" to "300", "hb_pb" to "1.20", "hb_bidder" to "appnexus"), engine.requests[0].kv)
+        engine.requests[0].cb.onFailed(3, "no fill")
+        assertEquals("the next floor tier carries the bid too", "1.20", engine.requests[1].kv["hb_pb"])
+        assertEquals("150", engine.requests[1].kv["vfx_fl"])
+        env.advance(2600)
+        assertEquals("…and so does the request without a floor", "1.20", engine.requests[2].kv["hb_pb"])
+        assertFalse(engine.requests[2].kv.containsKey("vfx_fl"))
+    }
+
+    @Test fun noBidsMeansGoogleAloneAsBefore() {
+        env.cfg = config(plBid())
+        env.prebidAsk = { _, done -> done(emptyMap()) }
+        FullScreenSlot("lv", env).load()
+        assertEquals(mapOf("vfx_pl" to "lv"), engine.requests[0].kv)
+    }
+
+    @Test fun aPlacementNotBidForNeverAsksPrebid() {
+        var asked = 0
+        env.prebidAsk = { _, done -> asked++; done(emptyMap()) }
+        FullScreenSlot("lv", env).load()   // setUp's placement has no prebidImp
+        assertEquals(0, asked)
+        assertEquals(1, engine.requests.size)
+    }
+
+    @Test fun aResetWhileBiddingDropsTheLateAnswer() {
+        env.cfg = config(plBid())
+        var answer: ((Map<String, String>) -> Unit)? = null
+        env.prebidAsk = { _, done -> answer = done }
+        val s = FullScreenSlot("lv", env)
+        s.load(); s.reset()
+        answer!!.invoke(mapOf("hb_pb" to "9.90"))
+        assertEquals("settings changed meanwhile: the old auction is forgotten", 0, engine.requests.size)
+        assertEquals("idle", s.state)
+        s.load(); answer!!.invoke(mapOf("hb_pb" to "1.00"))
+        assertEquals("a new load works", "1.00", engine.requests[0].kv["hb_pb"])
     }
 
     @Test fun neverTwoAtOnce() {

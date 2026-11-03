@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.1.0 (not released yet)
+
+- Prebid for apps (off unless the platform's settings carry a `prebid` block): banners and interstitials first ask
+  VisionForgeX's own Prebid Server for bids, waiting at most the settings' time, and give the winner's `hb_*` keys to
+  Google's request; no bid or a slow server means Google alone, as before. Pauses itself after repeated failures,
+  does not ask when GDPR applies without a consent string, sends no advertising ID or location. New event `pb`.
+- Includes everything below under 1.0.3.
+
 ## 1.0.3 (not released yet)
 
 - A banner's `fill` and `nofill` events say which sizes it asked for and how each answered (`sizes`), and a

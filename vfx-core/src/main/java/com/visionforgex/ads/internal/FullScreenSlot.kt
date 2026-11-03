@@ -21,6 +21,8 @@ internal interface SlotEnv {
     /** Settings arrived, the app enabled, consent allows requests. */
     fun canRequest(): Boolean
     fun keyValues(placement: Placement): Map<String, String>
+    /** Asks the Prebid Server for bids (when the settings say so) and answers once with the winning bid's keys, or with none. */
+    fun prebid(placement: Placement, done: (Map<String, String>) -> Unit) { done(emptyMap()) }
     fun event(type: String, p: Placement, fields: Map<String, Any?> = emptyMap())
     var fullScreenShowing: Boolean
     fun onFullScreenClosed()
@@ -62,12 +64,17 @@ internal class FullScreenSlot(val name: String, private val env: SlotEnv) {
         if (retryToken != null && !fresh) return
         if (fresh) { retryToken?.let(env::cancel); retryToken = null; attempt = 0 }
         if (attempt > p.retry.maxAttempts) return
-        loadTier(p, 0, ++loadId)
+        val id = ++loadId
+        if (p.prebidImp.isEmpty()) { loadTier(p, 0, id, emptyMap()); return }
+        loading = true
+        state = "bidding"
+        env.prebid(p) { bid -> if (id == loadId && loading) loadTier(p, 0, id, bid) }   // reset() in between: the answer is dropped
     }
 
-    private fun loadTier(p: Placement, tier: Int, id: Int) {
+    private fun loadTier(p: Placement, tier: Int, id: Int, bid: Map<String, String>) {
         val tiers = p.floors.tiers
         val kv = HashMap(env.keyValues(p))
+        kv.putAll(bid)   // hb_pb, hb_bidder … of the winning bid, on every tier of this load
         if (tier < tiers.size) kv[p.floors.key] = tiers[tier]
         loading = true
         state = "loading"
@@ -80,7 +87,7 @@ internal class FullScreenSlot(val name: String, private val env: SlotEnv) {
                 if (answered || id != loadId) return@Runnable
                 answered = true
                 env.event("nofill", p, mapOf("tier" to tierNo, "ms" to (env.now() - started), "err" to "timeout"))
-                loadTier(p, tier + 1, id)
+                loadTier(p, tier + 1, id, bid)
             })
         }
         env.engine.loadFullScreen(env.context(), p.format, p.unit, EngineRequest(kv), object : FullScreenLoadCallback {
@@ -105,7 +112,7 @@ internal class FullScreenSlot(val name: String, private val env: SlotEnv) {
                 timeoutToken?.let(env::cancel); timeoutToken = null
                 lastError = "$code $message"
                 env.event("nofill", p, mapOf("tier" to tierNo, "ms" to (env.now() - started), "err" to code.toString()))
-                if (tier < tiers.size) { loadTier(p, tier + 1, id); return }
+                if (tier < tiers.size) { loadTier(p, tier + 1, id, bid); return }
                 loading = false
                 scheduleRetry(p)
             }
