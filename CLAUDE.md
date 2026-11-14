@@ -20,12 +20,14 @@ revenue, a key, an account or a customer's name here.
   the listeners, `VfxOptions`) compatible within a major version; Java callers too (`@JvmStatic`, overloads).
 - **Google's limits are kept in the SDK whatever the settings say**: banners never refresh faster than
   30 s; ads are thrown away before Google's expiry (1 h, app open 4 h); never two full-screen ads at once.
-- **Test what you change**: `./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest`, lint, and
-  the sample app (`:sample:assembleDebug :sample:assembleRelease`, the release one minified). The
+- **Test what you change**: `./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest :vfx-ads-nextgen:testDebugUnitTest`,
+  lint, and the sample app on both engines (`:sample:assembleGmaRelease :sample:assembleNextgenRelease` and the debug
+  ones, the release ones minified). The
   platform's tests/slice6.php runs `PlatformContractTest` against its test server: run it after any
   change to the protocol. Never report a pass you did not watch.
-- `vfx-core` has no ad SDK in it; the Google engine is `vfx-ads`. A new engine (Google's Next-Gen SDK)
-  is a new module implementing `com.visionforgex.ads.engine.AdEngine`.
+- `vfx-core` has no ad SDK in it; the Google engines are `vfx-ads` (Google Mobile Ads 25.x) and `vfx-ads-nextgen`
+  (Google's GMA Next-Gen SDK). An app has exactly one; both implement `com.visionforgex.ads.engine.AdEngine`, and a
+  change to what is asked of Google is made in both, with the tests of both.
 - Publisher-facing wording says VisionForgeX and support@visionforgex.com.
 
 ## Building in Claude's workspace

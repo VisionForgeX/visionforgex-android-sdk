@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "visionforgex-android-sdk"
-include(":vfx-core", ":vfx-ads", ":sample")
+include(":vfx-core", ":vfx-ads", ":vfx-ads-nextgen", ":sample")

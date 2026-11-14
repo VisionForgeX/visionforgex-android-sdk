@@ -2,4 +2,4 @@
 jdk:
   - openjdk17
 install:
-  - ./gradlew :vfx-core:publishToMavenLocal :vfx-ads:publishToMavenLocal -x test
+  - ./gradlew :vfx-core:publishToMavenLocal :vfx-ads:publishToMavenLocal :vfx-ads-nextgen:publishToMavenLocal -x test

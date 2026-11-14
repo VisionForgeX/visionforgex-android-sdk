@@ -12,7 +12,7 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class EventLogTest {
     @get:Rule val tmp = TemporaryFolder()
-    private val header = EventLog.Header("vfx_k", "install-1", "ses-1", "1.0.0", "2.0", "14", "Pixel", "PK", "e1:a", 1.0)
+    private val header = EventLog.Header("vfx_k", "install-1", "ses-1", "1.0.0", "2.0", "14", "Pixel", "PK", "e1:a", 1.0, "ngsdk-1.6.0")
     private var answer = 200
     private val sent = ArrayList<JSONObject>()
     private fun log() = EventLog(tmp.root, { 1_800_000_000_000L }, { it.run() }) { _, json -> sent.add(JSONObject(json)); HttpResult(answer, "{\"ok\":true}", null) }
@@ -28,7 +28,14 @@ class EventLogTest {
         assertEquals("vfx_k", b.getString("k")); assertEquals("install-1", b.getString("i")); assertEquals("e1:a", b.getString("ab")); assertEquals("android", b.getString("p"))
         assertEquals(2, b.getJSONArray("e").length())
         assertEquals(4210L, b.getJSONArray("e").getJSONObject(1).getLong("v"))
+        assertEquals("which of Google's SDKs the app runs", "ngsdk-1.6.0", b.getString("eng"))
         assertEquals(0, l.size())
+    }
+
+    @Test fun anEngineWithNoNameSendsNoEngineField() {
+        val l = log(); l.add("req", mapOf("pl" to "lv"))
+        l.flush("https://x/e", EventLog.Header("vfx_k", "install-1", "ses-1", "1.0.0", "2.0", "14", "Pixel", "PK", "", 1.0))
+        assertTrue(!sent.single().has("eng"))
     }
 
     @Test fun outOfTheSampleOnlySessionsAndRevenueGo() {

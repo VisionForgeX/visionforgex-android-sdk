@@ -15,7 +15,7 @@ internal class EventLog(
     private val io: (Runnable) -> Unit,
     private val send: (url: String, json: String) -> HttpResult = { u, j -> Http.postJson(u, j) },
 ) {
-    class Header(val key: String, val install: String, val session: String, val sdk: String, val appVersion: String, val os: String, val device: String, val country: String, val ab: String, val sample: Double)
+    class Header(val key: String, val install: String, val session: String, val sdk: String, val appVersion: String, val os: String, val device: String, val country: String, val ab: String, val sample: Double, val engine: String = "")
 
     private val lock = Any()
     private val pending = ArrayList<JSONObject>()
@@ -58,6 +58,7 @@ internal class EventLog(
             try {
                 val body = JSONObject().put("k", header.key).put("i", header.install).put("s", header.session).put("sv", header.sdk).put("p", "android")
                     .put("av", header.appVersion).put("os", header.os).put("dev", header.device).put("c", header.country).put("ab", header.ab).put("sr", header.sample)
+                    .apply { if (header.engine.isNotEmpty()) put("eng", header.engine) }
                     .put("e", JSONArray(batch))
                 val r = send(url, body.toString())
                 if (r.code in 200..499) {

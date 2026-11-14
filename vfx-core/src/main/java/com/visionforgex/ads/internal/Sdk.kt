@@ -276,7 +276,7 @@ internal class Sdk(
     private fun header(): EventLog.Header {
         val av = try { app.packageManager.getPackageInfo(app.packageName, 0).versionName ?: "" } catch (e: Exception) { "" }
         return EventLog.Header(key, installId, sessionId, BuildConfig.VFX_VERSION, av, Build.VERSION.RELEASE ?: "", (Build.MANUFACTURER + " " + Build.MODEL).trim().take(60),
-            Locale.getDefault().country.take(2), config?.ab ?: "", config?.sample ?: 1.0)
+            Locale.getDefault().country.take(2), config?.ab ?: "", config?.sample ?: 1.0, engine.name)
     }
 
     fun flushNow() {

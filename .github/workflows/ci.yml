@@ -13,8 +13,8 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Tests
-        run: ./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest
+        run: ./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest :vfx-ads-nextgen:testDebugUnitTest
       - name: Lint
-        run: ./gradlew :vfx-core:lintRelease :vfx-ads:lintRelease
+        run: ./gradlew :vfx-core:lintRelease :vfx-ads:lintRelease :vfx-ads-nextgen:lintRelease
       - name: The sample app
-        run: ./gradlew :sample:assembleDebug :sample:assembleRelease
+        run: ./gradlew :sample:assembleGmaDebug :sample:assembleGmaRelease :sample:assembleNextgenDebug :sample:assembleNextgenRelease :sample:testGmaDebugUnitTest :sample:testNextgenDebugUnitTest

@@ -19,6 +19,12 @@ android {
         buildConfigField("String", "VFX_BASE_URL", "\"${(project.findProperty("vfxBaseUrl") as String?) ?: "https://apps.visionforgex.com"}\"")
     }
     buildFeatures { buildConfig = true }
+    // the same demo on either of Google's SDKs: "gma" (vfx-ads, Google Mobile Ads 25.x) or "nextgen" (vfx-ads-nextgen)
+    flavorDimensions += "engine"
+    productFlavors {
+        create("gma") { dimension = "engine" }
+        create("nextgen") { dimension = "engine"; applicationIdSuffix = ".nextgen"; versionNameSuffix = "-nextgen" }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -41,7 +47,8 @@ android {
 kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
 dependencies {
-    implementation(project(":vfx-ads"))
+    "gmaImplementation"(project(":vfx-ads"))
+    "nextgenImplementation"(project(":vfx-ads-nextgen"))
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)

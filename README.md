@@ -37,15 +37,23 @@ dependencyResolutionManagement {
 }
 ```
 
-`app/build.gradle.kts` (minSdk 24):
+`app/build.gradle.kts` (minSdk 24): **one** of these two lines.
 
 ```kotlin
 dependencies {
-    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.0.2")
+    // Google's GMA Next-Gen SDK (Google's preferred Android SDK since July 2026): recommended for new apps
+    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads-nextgen:1.2.0")
+
+    // or Google Mobile Ads 25.x (supported until 30 Jun 2027, retired 30 Jun 2028)
+    // implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.2.0")
 }
 ```
 
-It brings Google Mobile Ads 25 and Google's consent SDK; remove your own `play-services-ads` line.
+Each brings its Google SDK and Google's consent SDK; remove your own `play-services-ads` line. The two Google SDKs
+cannot be in one app, so never add both. Your code is the same with either: moving from `vfx-ads` to
+`vfx-ads-nextgen` is that one line. Next-Gen needs `compileSdk` 35 or higher. If your app uses mediation adapters
+of its own (AppLovin, Meta, …), check that each has a Next-Gen version before you move; the yield groups
+VisionForgeX manages for you work with both.
 
 `AndroidManifest.xml`, inside `<application>`: the App ID shown on your app's page on VisionForgeX.
 
@@ -136,12 +144,12 @@ Also: `VisionForgeX.setKeyValue("level", "12")` (your own targeting key-values),
 ## Building this repository
 
 ```
-./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest   # the tests
-./gradlew :sample:assembleDebug -PvfxAppKey=vfx_…                  # the sample app, every format
+./gradlew :vfx-core:testDebugUnitTest :vfx-ads:testDebugUnitTest :vfx-ads-nextgen:testDebugUnitTest   # the tests
+./gradlew :sample:assembleNextgenDebug -PvfxAppKey=vfx_…     # the sample app on Next-Gen (assembleGmaDebug: on 25.x)
 ```
 
 Modules: `vfx-core` (settings, pacing, preloading, floors, events, views, debug panel; no ad SDK),
-`vfx-ads` (the engine on Google Mobile Ads; the one apps add), `sample`. The engine is separate so
-Google's Next-Gen SDK can replace it without apps changing their code.
+`vfx-ads` (the engine on Google Mobile Ads 25.x), `vfx-ads-nextgen` (the engine on Google's GMA Next-Gen SDK),
+`sample` (flavours `gma` and `nextgen`). An app adds one engine; `vfx-core` finds whichever is there.
 
 Licensed under the Apache License 2.0. Questions: support@visionforgex.com.

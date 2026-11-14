@@ -100,7 +100,7 @@ Body (may be sent with `Content-Encoding: gzip`), at most 512 KB, at most 500 ev
 ```json
 {
   "k": "<app key>", "i": "<install ID>", "s": "<session ID>", "sv": "1.0.0", "p": "android",
-  "av": "2.3.1", "os": "14", "dev": "Pixel 8", "c": "PK", "ab": "e1:b", "sr": 1.0,
+  "av": "2.3.1", "os": "14", "dev": "Pixel 8", "c": "PK", "ab": "e1:b", "sr": 1.0, "eng": "ngsdk-1.6.0",
   "e": [
     { "t": "ses", "ts": 1730000000000, "n": 3, "first": false },
     { "t": "req", "pl": "level_complete", "f": "interstitial", "ts": 1730000000123, "tier": 1 },
@@ -122,6 +122,11 @@ Body (may be sent with `Content-Encoding: gzip`), at most 512 KB, at most 500 ev
 | `paid` | Google's paid event: what this one impression earned (`v` micros, `cur`, `prec`). |
 | `pb` | A Prebid auction ran (or was skipped): `r` = `bid`, `nobid`, `timeout`, `error` or `skip`; `ms` the time it took; `v` the best bid in micros (on `bid`); `why` on `skip` (`consent`, `breaker`). |
 | `capped` | `show()` was called but pacing said no (`why`: interval, session, hour, day, grace, nth, gap). |
+
+`eng` (SDK 1.2.0 on) names the Google SDK under the app: `ngsdk-<version>` for Google's GMA Next-Gen SDK
+(Android, `vfx-ads-nextgen`), `gma-25` for Google Mobile Ads 25.x (Android, `vfx-ads`), `gma-ios-<major>` on iOS.
+The platform shows it on the app's page so a publisher still on a Google SDK that is being retired can be told.
+It changes nothing in what is counted; an SDK that sends none is simply older.
 
 `c` is the country of the device's locale (the platform uses the request's own country when its CDN
 gives one). `ab` counts only when it names one of the app's own experiments. Events more than 3 days

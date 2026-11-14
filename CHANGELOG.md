@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.2.0 (not released yet)
+
+- **Google's GMA Next-Gen SDK**: a second engine, `vfx-ads-nextgen`, on Google's Next-Gen SDK 1.6.0 (Google's
+  preferred Android SDK since July 2026; Google Mobile Ads 25.x is deprecated on 30 Jun 2027 and retired on
+  30 Jun 2028). An app adds `vfx-ads-nextgen` instead of `vfx-ads`; its code does not change. Every format
+  (banner with the same size ladder, interstitial, rewarded, rewarded interstitial, app open, native in the same
+  two layouts), the same key-values, collapsible banners, request agent, age treatment, test devices, content rating,
+  consent form, paid events and ad inspector. Google's error numbers are reported as 25.x numbered them. Google
+  calls back on its own thread: the banner handles each answer on the main thread and ignores an answer to a load
+  that was replaced.
+- Events carry `eng`, the Google SDK under the app (`ngsdk-1.6.0` or `gma-25`), so the platform can show which
+  apps still run a Google SDK that is being retired.
+- The demo app builds on either engine (flavours `gma` and `nextgen`), each with its own banner lab.
+- Includes everything below under 1.1.0 and 1.0.3.
+
 ## 1.1.0 (not released yet)
 
 - Prebid for apps (off unless the platform's settings carry a `prebid` block): banners and interstitials first ask

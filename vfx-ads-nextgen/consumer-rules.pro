@@ -1,0 +1,1 @@
+-keep class com.visionforgex.ads.nextgen.NextGenEngine { <init>(); }

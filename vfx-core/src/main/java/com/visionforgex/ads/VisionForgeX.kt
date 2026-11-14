@@ -135,7 +135,8 @@ public object VisionForgeX {
     internal fun resetForTests() { sdk = null; ready = false; waiting.clear() }
     internal fun startForTests(s: Sdk, current: Activity?) { sdk = s; s.addListener { if (it.ready) markReady() }; s.start(current) }
 
-    private val ENGINES = listOf("com.visionforgex.ads.gma.GmaEngine")
+    // an app has one of the two (vfx-ads-nextgen or vfx-ads): Google's two SDKs cannot sit in one app
+    private val ENGINES = listOf("com.visionforgex.ads.nextgen.NextGenEngine", "com.visionforgex.ads.gma.GmaEngine")
 }
 
 /** One full-screen placement: `VisionForgeX.interstitial("level_complete")`. */
