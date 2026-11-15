@@ -61,6 +61,8 @@ internal data class Config(
     val ab: String,
     val placements: Map<String, Placement>,
     val prebid: PrebidSettings? = null,
+    /** Attribution tools each impression's revenue also goes to (PROTOCOL.md, "mmp"); none unless the platform says so. */
+    val mmp: Mmp = Mmp(),
 )
 
 internal object ConfigParser {
@@ -107,6 +109,7 @@ internal object ConfigParser {
             ab = o.optString("ab").let { if (Regex("^e\\d{1,4}:[ab]$").matches(it)) it else "" },
             placements = pls,
             prebid = prebid(o.optJSONObject("prebid")),
+            mmp = o.optJSONObject("mmp")?.let { m -> Mmp(m.optBoolean("appsflyer", false), m.optBoolean("adjust", false)) } ?: Mmp(),
         )
     }
 

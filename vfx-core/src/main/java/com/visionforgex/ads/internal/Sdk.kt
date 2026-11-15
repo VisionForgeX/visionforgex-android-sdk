@@ -51,6 +51,7 @@ internal class Sdk(
     var sessionId: String = ""; private set
     var sessionNumber: Int = 0; private set
     private var config: Config? = null
+    private val revenueForwarder = RevenueForwarder()
     var configFrom: String = "none"; private set
     var configAt: Long = 0; private set
     private var engineStarted = false
@@ -261,6 +262,7 @@ internal class Sdk(
             if (type == "paid") com.visionforgex.ads.VisionForgeX.revenueListener?.onRevenue(p.name, p.format, (fields["v"] as? Number)?.toLong() ?: 0L, fields["cur"] as? String ?: "", fields["prec"] as? String ?: "", fields["src"] as? String)
         } catch (t: Throwable) { VLog.e("The app's event listener failed", t) }   // the app's own code never stops ours
         val c = config ?: return
+        if (type == "paid" && c.mmp.any && !c.test) revenueForwarder.forward(c.mmp, p.name, p.format, p.unit, (fields["v"] as? Number)?.toLong() ?: 0L, fields["cur"] as? String ?: "", fields["src"] as? String)
         if (!c.eventsOn) return
         events.add(type, mapOf("pl" to p.name, "f" to p.format.wire) + fields)
         if (events.size() >= c.batch) flushNow()

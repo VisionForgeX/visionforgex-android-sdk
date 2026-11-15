@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.3.0 (not released yet)
+
+- **Ad revenue to AppsFlyer and Adjust** (off unless the platform's settings carry an `mmp` block): each impression's
+  revenue from Google's paid event goes to AppsFlyer (6.15+, `logAdRevenue`, mediation network Google AdMob, with the
+  serving network, ad unit, format and placement) and/or Adjust (`trackAdRevenue`, source `admob_sdk`, with the ad
+  unit and placement). Found in the app by name: the SDK depends on neither, an app without them is unchanged, and
+  one switched on but missing is said once in Logcat. Never in test mode, never a zero value. R8 rules keep the
+  few methods it calls when the app has them.
+
 ## 1.2.0 (15 Nov 2026)
 
 Proven on a real phone (15 Nov 2026, the Awlyaa demo app on Next-Gen): the platform's settings, an interstitial and an

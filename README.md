@@ -42,10 +42,10 @@ dependencyResolutionManagement {
 ```kotlin
 dependencies {
     // Google's GMA Next-Gen SDK (Google's preferred Android SDK since July 2026): recommended for new apps
-    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads-nextgen:1.2.0")
+    implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads-nextgen:1.3.0")
 
     // or Google Mobile Ads 25.x (supported until 30 Jun 2027, retired 30 Jun 2028)
-    // implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.2.0")
+    // implementation("com.github.VisionForgeX.visionforgex-android-sdk:vfx-ads:1.3.0")
 }
 ```
 
@@ -123,6 +123,19 @@ privacyButton.setOnClickListener { VisionForgeX.showPrivacyOptions(activity) }
 ```
 
 Set up Google's consent messages once in Ad Manager → Privacy & messaging.
+
+## Ad revenue in AppsFlyer or Adjust
+
+When VisionForgeX switches it on for the app, the SDK sends each impression's revenue (Google's paid event) to the
+attribution tool the app already runs, with nothing to write:
+
+- **AppsFlyer** 6.15 or newer: `logAdRevenue`, mediation network Google AdMob, the serving network, ad unit, format and
+  placement.
+- **Adjust**: `trackAdRevenue` with source `admob_sdk`, the ad unit and placement.
+
+The app adds and starts AppsFlyer or Adjust itself, as their guides say; VisionForgeX finds them in the app and never
+starts or sets them up. Not in the app: nothing is sent, and Logcat says so once. Demo ads are never sent. Do not also
+send Google's paid events to the same tool from your own code, or each impression counts twice.
 
 ## Checking it
 

@@ -63,6 +63,12 @@ Headers: `If-None-Match` with the last `ETag`. Answer `304` when nothing changed
   request's key-values on every floor tier. No bid, an error or a timeout: Google alone, as without the block.
   The SDK sends no request when GDPR applies and there is no consent string, and after `failures` errors or timeouts
   in a row it stops asking for `pauseSec`. Never present for child-directed or under-age apps or in test mode.
+- `mmp` (optional, absent unless the platform switched it on for this app): `{ "appsflyer": true, "adjust": false }`.
+  For each `true`, the SDK also gives every impression's revenue from Google's paid event to that attribution tool,
+  when the app has it (AppsFlyer 6.15 or newer: `logAdRevenue` with mediation network Google AdMob, the serving
+  network's name, and `ad_unit`, `ad_type`, `placement`; Adjust: `trackAdRevenue` with source `admob_sdk`, the unit
+  and the placement). The SDK finds the tool in the app by name and never starts or configures it; a tool that is not
+  there is skipped. Never in test mode, never a value of 0. The `paid` event to the platform is sent as before.
 - `events`: where to send events (section 2). `sample` (0–1) applies to every event but `ses` and
   `paid`, which are always sent (users and revenue are never estimated). The install is in or out of
   the sample once per install (FNV-1a of the install ID), not per event; the platform scales the
