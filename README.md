@@ -55,6 +55,11 @@ cannot be in one app, so never add both. Your code is the same with either: movi
 of its own (AppLovin, Meta, …), check that each has a Next-Gen version before you move; the yield groups
 VisionForgeX manages for you work with both.
 
+A WebView app on `vfx-ads-nextgen` registers its WebView with Google (the WebView API for Ads,
+`com.google.android.libraries.ads.mobile.sdk.MobileAds.registerWebView(webView)`) once the SDK is ready, in the
+`VfxInitListener` of `VisionForgeX.initialize`: Google's Next-Gen SDK refuses the registration before it has started
+(Google Mobile Ads 25.x took it at any time). Seen on a real phone, 15 Nov 2026.
+
 `AndroidManifest.xml`, inside `<application>`: the App ID shown on your app's page on VisionForgeX.
 
 ```xml

@@ -2,6 +2,10 @@
 
 ## 1.2.0 (15 Nov 2026)
 
+Proven on a real phone (15 Nov 2026, the Awlyaa demo app on Next-Gen): the platform's settings, an interstitial and an
+app open ad filled from Ad Manager; in Google's demo mode every format filled and showed; the banner ladder asked its three
+sizes in order. README: a WebView app on Next-Gen registers its WebView once the SDK is ready.
+
 - **Google's GMA Next-Gen SDK**: a second engine, `vfx-ads-nextgen`, on Google's Next-Gen SDK 1.6.0 (Google's
   preferred Android SDK since July 2026; Google Mobile Ads 25.x is deprecated on 30 Jun 2027 and retired on
   30 Jun 2028). An app adds `vfx-ads-nextgen` instead of `vfx-ads`; its code does not change. Every format
