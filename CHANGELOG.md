@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.0 (not released yet)
+## 1.2.0 (15 Nov 2026)
 
 - **Google's GMA Next-Gen SDK**: a second engine, `vfx-ads-nextgen`, on Google's Next-Gen SDK 1.6.0 (Google's
   preferred Android SDK since July 2026; Google Mobile Ads 25.x is deprecated on 30 Jun 2027 and retired on
