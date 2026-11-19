@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.3.0 (not released yet)
+## 1.3.0 (15 Nov 2026)
 
 - **Ad revenue to AppsFlyer and Adjust** (off unless the platform's settings carry an `mmp` block): each impression's
   revenue from Google's paid event goes to AppsFlyer (6.15+, `logAdRevenue`, mediation network Google AdMob, with the
